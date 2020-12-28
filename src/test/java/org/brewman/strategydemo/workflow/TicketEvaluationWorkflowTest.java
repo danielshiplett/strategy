@@ -46,6 +46,31 @@ class TicketEvaluationWorkflowTest {
         workflowEnvironment.close();
     }
 
+    @Test
+    void test_succeed() {
+        // Mock the activities to make the generateTicketNumber throw an
+        // IllegalArgumentException.  This exception will be our one type
+        // that does not trigger a retry.
+        TicketEvaluationActivities activities = new TicketEvaluationActivitiesImpl();
+        TicketEvaluationWorkflow workflow = null;
+
+        try {
+            worker.registerActivitiesImplementations(activities);
+            workflowEnvironment.start();
+
+            workflow = workflowClient.newWorkflowStub(TicketEvaluationWorkflow.class, workflowOptions);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            fail(e.getMessage());
+        }
+
+        try {
+            workflow.createTicket("this is a description");
+        } catch (WorkflowException e) {
+            fail(e.getMessage());
+        }
+    }
+
     /**
      * Highly unlikely in reality.  This is just to understand how activity failures
      * work in Temporal.io.
