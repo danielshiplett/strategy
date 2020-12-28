@@ -10,6 +10,8 @@ import java.time.Duration;
 @Slf4j
 public class TicketEvaluationWorkflowImpl implements TicketEvaluationWorkflow {
 
+    // An activity or workflow may also throw an ApplicationFailure.newNonRetryable()
+    // instead of us defining the types here.
     private final ActivityOptions options =
             ActivityOptions.newBuilder()
                     .setScheduleToCloseTimeout(Duration.ofHours(1))

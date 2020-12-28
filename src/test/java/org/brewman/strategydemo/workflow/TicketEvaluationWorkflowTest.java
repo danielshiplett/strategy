@@ -8,7 +8,6 @@ import io.temporal.failure.ApplicationFailure;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
-import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,21 +46,27 @@ class TicketEvaluationWorkflowTest {
         workflowEnvironment.close();
     }
 
+    /**
+     * Highly unlikely in reality.  This is just to understand how activity failures
+     * work in Temporal.io.
+     */
     @Test
-    void test() {
-        TicketEvaluationActivities ticketEvaluationActivities = mock(TicketEvaluationActivities.class);
-        given(ticketEvaluationActivities.generateTicketNumber())
+    void test_failToGenerateTicketNumber() {
+        // Mock the activities to make the generateTicketNumber throw an
+        // IllegalArgumentException.  This exception will be our one type
+        // that does not trigger a retry.
+        TicketEvaluationActivities activities = mock(TicketEvaluationActivities.class);
+        given(activities.generateTicketNumber())
                 .willThrow(new IllegalArgumentException("Out of ticket numbers"));
 
         TicketEvaluationWorkflow workflow = null;
 
         try {
-            worker.registerActivitiesImplementations(ticketEvaluationActivities);
+            worker.registerActivitiesImplementations(activities);
             workflowEnvironment.start();
 
             workflow = workflowClient.newWorkflowStub(TicketEvaluationWorkflow.class, workflowOptions);
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
             fail(e.getMessage());
         }
@@ -70,7 +75,6 @@ class TicketEvaluationWorkflowTest {
             workflow.createTicket("this is a description");
             fail("unreachable");
         } catch (WorkflowException e) {
-            //log.error(e.getMessage(), e);
             Throwable rootCause = Throwables.getRootCause(e);
             assertThat(rootCause, instanceOf(ApplicationFailure.class));
 
