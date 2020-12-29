@@ -1,10 +1,12 @@
 package org.brewman.strategydemo.workflow;
 
 import com.google.common.base.Throwables;
+import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowException;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.failure.ApplicationFailure;
+import io.temporal.internal.common.WorkflowExecutionUtils;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
@@ -12,16 +14,23 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.brewman.strategydemo.workflow.TicketEvaluationWorkflow.TASK;
+import java.time.Duration;
+
+import static org.awaitility.Awaitility.await;
+import static org.brewman.strategydemo.workflow.TicketWorkflow.TASK;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @Slf4j
-class TicketEvaluationWorkflowTest {
+class TicketWorkflowTest {
 
     private TestWorkflowEnvironment workflowEnvironment;
     private Worker worker;
@@ -32,7 +41,7 @@ class TicketEvaluationWorkflowTest {
     void beforeEachTicketEvaluationWorkflowTest() {
         workflowEnvironment = TestWorkflowEnvironment.newInstance();
         worker = workflowEnvironment.newWorker(TASK);
-        worker.registerWorkflowImplementationTypes(TicketEvaluationWorkflowImpl.class);
+        worker.registerWorkflowImplementationTypes(TicketWorkflowImpl.class);
 
         workflowClient = workflowEnvironment.getWorkflowClient();
 
@@ -46,26 +55,28 @@ class TicketEvaluationWorkflowTest {
         workflowEnvironment.close();
     }
 
+    /**
+     * Test that we can launch a workflow asynchronously and wait for it to hit a 'middle' state.
+     */
     @Test
-    void test_succeed() {
+    void test_succeedAsync() {
         // Mock the activities to make the generateTicketNumber throw an
         // IllegalArgumentException.  This exception will be our one type
         // that does not trigger a retry.
-        TicketEvaluationActivities activities = new TicketEvaluationActivitiesImpl();
-        TicketEvaluationWorkflow workflow = null;
+        TicketActivities activities = new TicketActivitiesImpl();
+
+        worker.registerActivitiesImplementations(activities);
+        workflowEnvironment.start();
+
+        final TicketWorkflow workflow = workflowClient.newWorkflowStub(TicketWorkflow.class, workflowOptions);
 
         try {
-            worker.registerActivitiesImplementations(activities);
-            workflowEnvironment.start();
+            WorkflowExecution workflowExecution = WorkflowClient.start(workflow::createTicket, "this is a description");
+            await()
+                    .atMost(Duration.ofSeconds(10))
+                    .untilAsserted(() -> assertNotEquals(TicketEntity.Status.NOT_CREATED, workflow.getTicketStatus()));
 
-            workflow = workflowClient.newWorkflowStub(TicketEvaluationWorkflow.class, workflowOptions);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            fail(e.getMessage());
-        }
-
-        try {
-            workflow.createTicket("this is a description");
+            // TODO: Log history/check more status
         } catch (WorkflowException e) {
             fail(e.getMessage());
         }
@@ -80,17 +91,17 @@ class TicketEvaluationWorkflowTest {
         // Mock the activities to make the generateTicketNumber throw an
         // IllegalArgumentException.  This exception will be our one type
         // that does not trigger a retry.
-        TicketEvaluationActivities activities = mock(TicketEvaluationActivities.class);
-        given(activities.generateTicketNumber())
+        TicketActivities activities = mock(TicketActivities.class);
+        given(activities.generateTicketName())
                 .willThrow(new IllegalArgumentException("Out of ticket numbers"));
 
-        TicketEvaluationWorkflow workflow = null;
+        TicketWorkflow workflow = null;
 
         try {
             worker.registerActivitiesImplementations(activities);
             workflowEnvironment.start();
 
-            workflow = workflowClient.newWorkflowStub(TicketEvaluationWorkflow.class, workflowOptions);
+            workflow = workflowClient.newWorkflowStub(TicketWorkflow.class, workflowOptions);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             fail(e.getMessage());
@@ -105,6 +116,8 @@ class TicketEvaluationWorkflowTest {
 
             ApplicationFailure applicationFailure = (ApplicationFailure)rootCause;
             assertEquals("Out of ticket numbers", applicationFailure.getOriginalMessage());
+
+            verify(activities, times(1)).validateTicketInput(eq("this is a description"));
         }
     }
 }

@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GetProtectedDataCommand {
+public class CreateTicketResult {
 
     private String name;
+    private String description;
 }

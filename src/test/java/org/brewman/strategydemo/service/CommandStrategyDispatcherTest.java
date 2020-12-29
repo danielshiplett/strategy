@@ -13,8 +13,9 @@ public class CommandStrategyDispatcherTest {
 
     @Test
     public void test() {
-        GetProtectedDataCommand getProtectedDataCommand = new GetProtectedDataCommand("somename");
-        GetProtectedDataResult getProtectedDataResult = commandStrategyDispatcher.dispatch(getProtectedDataCommand);
-        Assertions.assertEquals("Hello somename!", getProtectedDataResult.getGreeting());
+        CreateTicketCommand createTicketCommand = new CreateTicketCommand("some description");
+        CreateTicketResult createTicketResult = commandStrategyDispatcher.dispatch(createTicketCommand);
+        Assertions.assertEquals("some description", createTicketResult.getDescription());
+        Assertions.assertEquals("TIK-01234", createTicketResult.getName());
     }
 }
