@@ -43,8 +43,9 @@ public class TicketWorkflowImpl implements TicketWorkflow {
         // Here is where I want the original caller to stop waiting and get a response.
 
         // More workflow stuff that can definitely take time.
-        log.info("gonna take a while");
+        log.info("gonna take a while...");
         Workflow.sleep(Duration.ofDays(1));
+        log.info("...and we're back");
 
         // The workflow is finished when the ticket status is either REJECTED or COMPLETE.
         Workflow.await(() -> (ticketEntity.getStatus() == TicketEntity.Status.REJECTED) ||

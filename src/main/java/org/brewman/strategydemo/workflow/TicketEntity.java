@@ -11,12 +11,12 @@ public class TicketEntity {
 
     public static enum Status {
         NOT_CREATED,    // Needed for status checks prior to the creation.  Never set a ticket to this.
-        NEW,
-        PENDING_REVIEW,
-        REVIEWED,
-        APPROVED,
-        REJECTED,
-        COMPLETE
+        NEW,            // Will only be new for a brief moment until the workflow has completed initial notifications
+        PENDING_REVIEW, // Waiting on the local reviewer to assess
+        REVIEWED,       // Waiting on the compliance officer to assess
+        APPROVED,       // Move to the next phase
+        REJECTED,       // End state
+        COMPLETE        // End state
     }
 
     private String name;
