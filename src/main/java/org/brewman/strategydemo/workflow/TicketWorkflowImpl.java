@@ -1,12 +1,17 @@
 package org.brewman.strategydemo.workflow;
 
+import ai.applica.spring.boot.starter.temporal.annotations.ActivityStub;
+import ai.applica.spring.boot.starter.temporal.annotations.TemporalWorkflow;
 import io.temporal.activity.ActivityOptions;
 import io.temporal.common.RetryOptions;
 import io.temporal.workflow.Workflow;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+@Component
+@TemporalWorkflow("ticket_workflow")
 @Slf4j
 public class TicketWorkflowImpl implements TicketWorkflow {
 
@@ -14,37 +19,42 @@ public class TicketWorkflowImpl implements TicketWorkflow {
 
     // An activity or workflow may also throw an ApplicationFailure.newNonRetryable()
     // instead of us defining the types here.
-    private final ActivityOptions options =
+    private final RetryOptions retryOptions = RetryOptions.newBuilder()
+            .setInitialInterval(Duration.ofSeconds(1))
+            .setDoNotRetry(IllegalArgumentException.class.getName())
+            .build();
+
+    private final ActivityOptions activityOptions =
             ActivityOptions.newBuilder()
                     .setScheduleToCloseTimeout(Duration.ofHours(1))
-                    .setRetryOptions(
-                            RetryOptions.newBuilder()
-                                    .setInitialInterval(Duration.ofSeconds(1))
-                                    .setDoNotRetry(IllegalArgumentException.class.getName())
-                                    .build()
-                    )
+                    .setRetryOptions(retryOptions)
                     .build();
 
-    private final TicketActivities activities =
-            Workflow.newActivityStub(TicketActivities.class, options);
+    // Normally you'd do 'Workflow.newActivityStub(TicketActivities.class, activityOptions)' but instead this
+    // library wants to use this annotation to inject.
+    @ActivityStub(duration = 10, durationUnits = "SECONDS")
+    private TicketActivities activities;
 
     @Override
-    public void createTicket(String description) {
+    public void createTicket(String name, String description) {
         log.info("createTicket: {}", description);
 
         // Steps to create the ticket.  Original caller is waiting patiently.
-        activities.validateTicketInput(description);
-        String ticketName = activities.generateTicketName();
 
         // All tickets are created in the NEW status.
-        ticketEntity = new TicketEntity(ticketName, TicketEntity.Status.NEW, description);
+        ticketEntity = new TicketEntity(name, TicketEntity.Status.NEW, description);
         ticketEntity = activities.storeTicket(ticketEntity);
 
-        // Here is where I want the original caller to stop waiting and get a response.
+        // Because the status just became NEW, the original caller is now able to continue.
+
+        // TODO: Put notifications here.
+        log.info("sending notifications");
+        activities.sendStartTicketNotifications(ticketEntity);
+        log.info("sent notifications");
 
         // More workflow stuff that can definitely take time.
         log.info("gonna take a while...");
-        Workflow.sleep(Duration.ofDays(1));
+        //Workflow.sleep(Duration.ofDays(1));
         log.info("...and we're back");
 
         // The workflow is finished when the ticket status is either REJECTED or COMPLETE.
@@ -68,5 +78,10 @@ public class TicketWorkflowImpl implements TicketWorkflow {
         }
 
         return ticketEntity.getStatus();
+    }
+
+    @Override
+    public TicketEntity getTicket() {
+        return ticketEntity;
     }
 }

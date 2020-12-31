@@ -1,0 +1,21 @@
+
+spring:
+    output.ansi.enabled: always
+
+    temporal:
+        # host: localhost
+        # port: 7233
+        # useSsl: false
+        # createWorkers: true
+        workflowDefaults:
+            executiontimeout: 1000
+            executiontimeoutUnit: SECONDS
+            activityPoolSize: 100
+            workflowPoolSize: 50
+        workflows:
+            ticket_workflow:
+                taskQueue: ticket_workflow
+                executiontimeout: 1000
+                executiontimeoutUnit: SECONDS
+                activityPoolSize: 100
+                workflowPoolSize: 50

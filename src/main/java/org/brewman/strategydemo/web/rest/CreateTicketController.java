@@ -20,8 +20,13 @@ public class CreateTicketController {
     @PostMapping("/api/v1/create-ticket")
     public ResponseEntity<CreateTicketResponseDto> createTicket(@RequestBody CreateTicketRequestDto createTicketRequestDto) {
         CreateTicketCommand createTicketCommand = new CreateTicketCommand(createTicketRequestDto.getDescription());
+
         CreateTicketResult createTicketResult = commandStrategyDispatcher.dispatch(createTicketCommand);
 
-        return ResponseEntity.ok(new CreateTicketResponseDto(createTicketResult.getName(), createTicketResult.getDescription()));
+        return ResponseEntity.ok(
+                new CreateTicketResponseDto(
+                        createTicketResult.getName(),
+                        createTicketResult.getStatus(),
+                        createTicketResult.getDescription()));
     }
 }
