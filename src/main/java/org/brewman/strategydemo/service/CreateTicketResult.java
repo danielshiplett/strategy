@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class CreateTicketResult {
 
     private String name;
+    private String status;
     private String description;
 }

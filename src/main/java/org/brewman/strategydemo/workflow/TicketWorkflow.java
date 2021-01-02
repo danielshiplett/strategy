@@ -11,11 +11,14 @@ public interface TicketWorkflow {
     String TASK = "TICKETEVALUATIONTASK";
 
     @WorkflowMethod
-    void createTicket(String description);
+    void createTicket(String name, String description);
 
     @SignalMethod
     void updateTicketStatus(TicketEntity.Status status);
 
     @QueryMethod
     TicketEntity.Status getTicketStatus();
+
+    @QueryMethod
+    TicketEntity getTicket();
 }

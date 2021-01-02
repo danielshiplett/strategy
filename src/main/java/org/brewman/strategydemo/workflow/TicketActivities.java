@@ -15,20 +15,6 @@ public interface TicketActivities {
     TicketEntity getStoredTicket(String name);
 
     /**
-     * Last chance to validate any user input.
-     *
-     * @param description the Ticket description
-     */
-    void validateTicketInput(String description);
-
-    /**
-     * Assume the name generator is part of another system.  Get the next Ticket name.
-     *
-     * @return the new Ticket name
-     */
-    String generateTicketName();
-
-    /**
      * Store the Ticket in the DB.
      *
      * @param ticketEntity the new or updated ticket
@@ -36,4 +22,13 @@ public interface TicketActivities {
      * @return the ticket
      */
     TicketEntity storeTicket(TicketEntity ticketEntity);
+
+    /**
+     * Send out notifications to the correct users about the event.
+     *
+     * @param event the type of the event that just occurred
+     *
+     * @param ticketEntity the new or updated ticket
+     */
+    void sendNotifications(String event, TicketEntity ticketEntity);
 }

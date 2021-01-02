@@ -18,9 +18,10 @@ public class TicketActivitiesImpl implements TicketActivities {
     }
 
     @Override
-    public void validateTicketInput(String description) {
-        log.info("validateTicketInput: {}", description);
+    public TicketEntity storeTicket(TicketEntity ticketEntity) {
+        log.info("storeTicket: {}", ticketEntity);
 
+        // Just to see what is here.
         ActivityExecutionContext ctx = Activity.getExecutionContext();
         ActivityInfo info = ctx.getInfo();
         log.info("namespace=" +  info.getActivityNamespace());
@@ -28,22 +29,16 @@ public class TicketActivitiesImpl implements TicketActivities {
         log.info("runId=" + info.getRunId());
         log.info("activityId=" + info.getActivityId());
 
-        // Does nothing if the input is OK.
-    }
-
-    @Override
-    public String generateTicketName() {
-        log.info("generateTicketName:");
-        return "TIK-01234";
-    }
-
-    @Override
-    public TicketEntity storeTicket(TicketEntity ticketEntity) {
-        log.info("storeTicket: {}", ticketEntity);
-
         // TODO: Store the ticket in the DB.
         this.ticketEntity = ticketEntity;
 
         return ticketEntity;
+    }
+
+    @Override
+    public void sendNotifications(String event, TicketEntity ticketEntity) {
+        log.info("sendNotifications: {}", event);
+
+        // Intentionally doing nothing for now.
     }
 }

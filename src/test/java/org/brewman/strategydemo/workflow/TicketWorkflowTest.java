@@ -4,20 +4,18 @@ import com.google.common.base.Throwables;
 import com.uber.m3.tally.Scope;
 import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.api.history.v1.HistoryEvent;
-import io.temporal.api.workflowservice.v1.WorkflowServiceGrpc;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowException;
 import io.temporal.client.WorkflowOptions;
-import io.temporal.client.WorkflowStub;
 import io.temporal.failure.ApplicationFailure;
 import io.temporal.internal.common.WorkflowExecutionUtils;
-import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.util.Iterator;
@@ -29,8 +27,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -78,7 +77,7 @@ class TicketWorkflowTest {
 
         try {
             // Start the workflow and wait for the ticket to move beyond the NOT_CREATED status.
-            WorkflowExecution workflowExecution = WorkflowClient.start(workflow::createTicket, "this is a description");
+            WorkflowExecution workflowExecution = WorkflowClient.start(workflow::createTicket, "TIK-01234", "this is a description");
             await()
                     .atMost(Duration.ofSeconds(10))
                     .untilAsserted(() -> assertNotEquals(TicketEntity.Status.NOT_CREATED, workflow.getTicketStatus()));
@@ -101,37 +100,32 @@ class TicketWorkflowTest {
      * work in Temporal.io.
      */
     @Test
-    void test_failToGenerateTicketNumber() {
+    void test_failToNotify() {
         // Mock the activities to make the generateTicketNumber throw an
         // IllegalArgumentException.  This exception will be our one type
         // that does not trigger a retry.
         TicketActivities activities = mock(TicketActivities.class);
-        given(activities.generateTicketName())
-                .willThrow(new IllegalArgumentException("Out of ticket numbers"));
+        Mockito
+                .doThrow(new IllegalArgumentException("sending of notifications failed"))
+                .when(activities)
+                .sendNotifications(anyString(), any());
 
-        TicketWorkflow workflow = null;
+        worker.registerActivitiesImplementations(activities);
+        workflowEnvironment.start();
 
-        try {
-            worker.registerActivitiesImplementations(activities);
-            workflowEnvironment.start();
-
-            workflow = workflowClient.newWorkflowStub(TicketWorkflow.class, workflowOptions);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            fail(e.getMessage());
-        }
+        TicketWorkflow workflow = workflowClient.newWorkflowStub(TicketWorkflow.class, workflowOptions);
 
         try {
-            workflow.createTicket("this is a description");
+            workflow.createTicket("TIK-01234","this is a description");
             fail("unreachable");
         } catch (WorkflowException e) {
             Throwable rootCause = Throwables.getRootCause(e);
             assertThat(rootCause, instanceOf(ApplicationFailure.class));
 
             ApplicationFailure applicationFailure = (ApplicationFailure)rootCause;
-            assertEquals("Out of ticket numbers", applicationFailure.getOriginalMessage());
+            assertEquals("sending of notifications failed", applicationFailure.getOriginalMessage());
 
-            verify(activities, times(1)).validateTicketInput(eq("this is a description"));
+            verify(activities, times(1)).sendNotifications(eq("TICKET_CREATE"), any());
         }
     }
 }

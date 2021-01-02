@@ -28,19 +28,26 @@ public class TicketWorkflowImpl implements TicketWorkflow {
     private final TicketActivities activities =
             Workflow.newActivityStub(TicketActivities.class, options);
 
+    public TicketWorkflowImpl() {
+        log.info("TicketWorkflowImpl");
+    }
+
     @Override
-    public void createTicket(String description) {
+    public void createTicket(String name, String description) {
         log.info("createTicket: {}", description);
 
         // Steps to create the ticket.  Original caller is waiting patiently.
-        activities.validateTicketInput(description);
-        String ticketName = activities.generateTicketName();
 
         // All tickets are created in the NEW status.
-        ticketEntity = new TicketEntity(ticketName, TicketEntity.Status.NEW, description);
+        ticketEntity = new TicketEntity(name, TicketEntity.Status.NEW, description);
         ticketEntity = activities.storeTicket(ticketEntity);
 
         // Here is where I want the original caller to stop waiting and get a response.
+
+        // Then send out notifications about the ticket creations.
+        log.info("sending notifications");
+        activities.sendNotifications("TICKET_CREATE", ticketEntity);
+        log.info("sent notifications");
 
         // More workflow stuff that can definitely take time.
         log.info("gonna take a while...");
@@ -68,5 +75,10 @@ public class TicketWorkflowImpl implements TicketWorkflow {
         }
 
         return ticketEntity.getStatus();
+    }
+
+    @Override
+    public TicketEntity getTicket() {
+        return ticketEntity;
     }
 }
