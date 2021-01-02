@@ -12,14 +12,12 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import static org.brewman.strategydemo.workflow.TicketWorkflow.TASK;
 
-@Configuration
 @RequiredArgsConstructor
 @Slf4j
 public class WorkflowConfiguration implements BeanPostProcessor, Ordered, BeanFactoryAware, SmartInitializingSingleton {

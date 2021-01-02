@@ -5,13 +5,12 @@ import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowClientOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.serviceclient.WorkflowServiceStubsOptions;
-import io.temporal.worker.Worker;
-import io.temporal.worker.WorkerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.brewman.spring.temporal.config.EnableTemporalWorkflows;
 import org.brewman.spring.temporal.config.TemporalOptionsConfiguration;
 import org.brewman.spring.temporal.config.TemporalProperties;
-import org.brewman.strategydemo.workflow.TicketWorkflowImpl;
+import org.brewman.spring.temporal.config.WorkerBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(TemporalProperties.class)
-//@EnableTemporalWorkflows("org.brewman.strategydemo.workflow")
+@EnableTemporalWorkflows("org.brewman.strategydemo.workflow")
 @RequiredArgsConstructor
 @Slf4j
 public class TemporalConfiguration  {
@@ -27,19 +26,9 @@ public class TemporalConfiguration  {
     private final TemporalOptionsConfiguration temporalOptionsConfiguration;
 
     @Bean
-    public Worker ticketWorker(WorkerFactory workerFactory) {
-        log.info("Temporal Ticket Worker Created");
-        Worker worker = workerFactory.newWorker(TicketWorkflowImpl.TASK);
-        worker.registerWorkflowImplementationTypes(TicketWorkflowImpl.class);
-        workerFactory.start();
-
-        return  worker;
-    }
-
-    @Bean
-    public WorkerFactory defaultWorkerFactory(WorkflowClient workflowClient) {
-        log.info("Temporal Default Worker Factory Enabled");
-        return WorkerFactory.newInstance(workflowClient);
+    public WorkerBeanFactory workerBeanFactory(WorkflowClient workflowClient) {
+        log.info("WorkerBeanFactory Created");
+        return new WorkerBeanFactory(workflowClient);
     }
 
     @Bean

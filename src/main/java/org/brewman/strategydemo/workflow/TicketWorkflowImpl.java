@@ -28,10 +28,6 @@ public class TicketWorkflowImpl implements TicketWorkflow {
     private final TicketActivities activities =
             Workflow.newActivityStub(TicketActivities.class, options);
 
-    public TicketWorkflowImpl() {
-        log.info("TicketWorkflowImpl");
-    }
-
     @Override
     public void createTicket(String name, String description) {
         log.info("createTicket: {}", description);

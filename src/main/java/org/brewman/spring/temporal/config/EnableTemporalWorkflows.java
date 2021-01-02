@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-@Import(TemporalRegistrar.class)
+@Import(TemporalWorkflowRegistrar.class)
 public @interface EnableTemporalWorkflows {
     String[] value() default {};
 

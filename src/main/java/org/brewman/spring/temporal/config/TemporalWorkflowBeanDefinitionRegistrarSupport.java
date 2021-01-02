@@ -1,11 +1,12 @@
 package org.brewman.spring.temporal.config;
 
+import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
+import org.brewman.strategydemo.workflow.TicketWorkflowImpl;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
-import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ConfigurationClassPostProcessor;
@@ -14,24 +15,18 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.springframework.beans.factory.support.BeanDefinitionReaderUtils.GENERATED_BEAN_NAME_SEPARATOR;
-
 @Slf4j
-public abstract class TemporalBeanDefinitionRegistrarSupport
+public abstract class TemporalWorkflowBeanDefinitionRegistrarSupport
         implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
 
-    @SuppressWarnings("null")
-    @Nonnull
     private ResourceLoader resourceLoader;
-
-    @SuppressWarnings("null")
-    @Nonnull
     private Environment environment;
 
     /*
@@ -39,7 +34,7 @@ public abstract class TemporalBeanDefinitionRegistrarSupport
      * @see org.springframework.context.ResourceLoaderAware#setResourceLoader(org.springframework.core.io.ResourceLoader)
      */
     @Override
-    public void setResourceLoader(ResourceLoader resourceLoader) {
+    public void setResourceLoader(@Nonnull ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
@@ -48,13 +43,14 @@ public abstract class TemporalBeanDefinitionRegistrarSupport
      * @see org.springframework.context.EnvironmentAware#setEnvironment(org.springframework.core.env.Environment)
      */
     @Override
-    public void setEnvironment(Environment environment) {
+    public void setEnvironment(@Nonnull Environment environment) {
         this.environment = environment;
     }
 
     @Override
     @Deprecated
-    public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
+    public void registerBeanDefinitions(@Nonnull AnnotationMetadata metadata,
+                                        @Nonnull BeanDefinitionRegistry registry) {
         registerBeanDefinitions(metadata, registry, ConfigurationClassPostProcessor.IMPORT_BEAN_NAME_GENERATOR);
     }
 
@@ -63,8 +59,9 @@ public abstract class TemporalBeanDefinitionRegistrarSupport
      * @see org.springframework.context.annotation.ImportBeanDefinitionRegistrar#registerBeanDefinitions(org.springframework.core.type.AnnotationMetadata, org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.beans.factory.support.BeanNameGenerator)
      */
     @Override
-    public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry,
-                                        BeanNameGenerator generator) {
+    public void registerBeanDefinitions(@Nonnull AnnotationMetadata metadata,
+                                        @Nonnull BeanDefinitionRegistry registry,
+                                        @Nonnull BeanNameGenerator generator) {
         log.info("registerBeanDefinitions");
 
         Assert.notNull(metadata, "AnnotationMetadata must not be null!");
@@ -80,14 +77,6 @@ public abstract class TemporalBeanDefinitionRegistrarSupport
                 getAnnotation(), resourceLoader, environment, registry, generator);
 
         log.info("configurationSource: {}", configurationSource);
-
-/*        RepositoryConfigurationExtension extension = getExtension();
-        RepositoryConfigurationUtils.exposeRegistration(extension, registry, configurationSource);
-
-        RepositoryConfigurationDelegate delegate = new RepositoryConfigurationDelegate(configurationSource, resourceLoader,
-                environment);
-
-        delegate.registerRepositoriesIn(registry, extension);*/
 
         registerWorkflowsIn(registry, configurationSource);
     }
@@ -109,8 +98,45 @@ public abstract class TemporalBeanDefinitionRegistrarSupport
                 log.info("Found candidate workflow {}", candidate.getBeanClassName());
             }
 
-           // registry.registerBeanDefinition(candidate.getBeanClassName(), candidate);
+            Class<?> workflowClazz = loadWorkflowClass(candidate);
+            log.info("Loading class {}", workflowClazz.getName());
+
+            // TODO: The options need to come from properties.
+            BeanDefinition workerBeanDefinition = createWorkerBeanDefinition(workflowClazz, TicketWorkflowImpl.TASK);
+
+            // TODO: Need to generate the bean name.
+            registry.registerBeanDefinition("SOMEWORKER", workerBeanDefinition);
+            //registry.registerBeanDefinition(candidate.getBeanClassName(), candidate);
         }
+    }
+
+    private BeanDefinition createWorkerBeanDefinition(Class<?> workflowImplementationClass, String workerTaskQueue) {
+        WorkerBeanDefinition beanDefinition = new WorkerBeanDefinition();
+        beanDefinition.setBeanClassName(Worker.class.getName());
+        beanDefinition.setFactoryBeanName("workerBeanFactory");
+        beanDefinition.setFactoryMethodName("createWorker");
+
+        /*
+         * Unclear in the Spring docs, but the ConstructorArgumentValues will be passed as parameters to the
+         * specified factory method.
+         */
+        ConstructorArgumentValues constructorArgumentValues = new ConstructorArgumentValues();
+        constructorArgumentValues.addGenericArgumentValue(workflowImplementationClass);
+        constructorArgumentValues.addGenericArgumentValue(workerTaskQueue);
+
+        beanDefinition.setConstructorArgumentValues(constructorArgumentValues);
+
+        return beanDefinition;
+    }
+
+    private Class<?> loadWorkflowClass(BeanDefinition beanDefinition) {
+        try {
+            return ClassUtils.forName(beanDefinition.getBeanClassName(), resourceLoader.getClassLoader());
+        } catch (ClassNotFoundException | LinkageError e) {
+            log.warn("Could not load type {} with class loader {}", beanDefinition.getBeanClassName(), resourceLoader.getClassLoader());
+        }
+
+        return null;
     }
 
     private Stream<BeanDefinition> getCandidates(AnnotationWorkflowConfigurationSource configurationSource) {
