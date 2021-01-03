@@ -1,4 +1,4 @@
-package org.brewman.strategydemo.workflow;
+package org.brewman.strategydemo.temporal.workflows;
 
 import com.google.common.base.Throwables;
 import com.uber.m3.tally.Scope;
@@ -12,6 +12,9 @@ import io.temporal.internal.common.WorkflowExecutionUtils;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
+import org.brewman.strategydemo.domain.TicketEntity;
+import org.brewman.strategydemo.temporal.activities.TicketActivities;
+import org.brewman.strategydemo.temporal.activities.TicketActivitiesImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +24,7 @@ import java.time.Duration;
 import java.util.Iterator;
 
 import static org.awaitility.Awaitility.await;
-import static org.brewman.strategydemo.workflow.TicketWorkflow.TASK;
+import static org.brewman.strategydemo.temporal.workflows.TicketWorkflow.TASK;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;

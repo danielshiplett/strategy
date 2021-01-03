@@ -15,7 +15,7 @@
  *  permissions and limitations under the License.
  */
 
-package org.brewman.spring.temporal.config;
+package org.brewman.temporal.autoconfigure;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -1,14 +1,15 @@
-package org.brewman.strategydemo.workflow;
+package org.brewman.strategydemo.temporal.workflows;
 
 import io.temporal.workflow.QueryMethod;
 import io.temporal.workflow.SignalMethod;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
+import org.brewman.strategydemo.domain.TicketEntity;
 
 @WorkflowInterface
 public interface TicketWorkflow {
 
-    String TASK = "TICKETEVALUATIONTASK";
+    public String TASK = "TICKETEVALUATIONTASK";
 
     @WorkflowMethod
     void createTicket(String name, String description);

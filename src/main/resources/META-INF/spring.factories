@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.brewman.spring.temporal.config.DefaultTemporalOptionsConfiguration
+org.brewman.temporal.autoconfigure.DefaultTemporalOptionsConfiguration

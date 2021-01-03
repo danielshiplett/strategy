@@ -1,4 +1,4 @@
-package org.brewman.spring.temporal.config;
+package org.brewman.temporal.autoconfigure;
 
 import io.temporal.client.WorkflowClient;
 import io.temporal.worker.Worker;

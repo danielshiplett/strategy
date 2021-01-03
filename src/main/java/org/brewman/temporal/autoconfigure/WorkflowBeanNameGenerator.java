@@ -1,4 +1,4 @@
-package org.brewman.spring.temporal.config;
+package org.brewman.temporal.autoconfigure;
 
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;

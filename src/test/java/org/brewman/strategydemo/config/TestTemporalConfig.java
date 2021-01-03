@@ -5,13 +5,13 @@ import io.temporal.client.WorkflowOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
-import org.brewman.strategydemo.workflow.TicketActivitiesImpl;
-import org.brewman.strategydemo.workflow.TicketWorkflowImpl;
+import org.brewman.strategydemo.temporal.activities.TicketActivitiesImpl;
+import org.brewman.strategydemo.temporal.workflows.TicketWorkflowImpl;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
-import static org.brewman.strategydemo.workflow.TicketWorkflow.TASK;
+import static org.brewman.strategydemo.temporal.workflows.TicketWorkflow.TASK;
 
 @TestConfiguration
 @Slf4j

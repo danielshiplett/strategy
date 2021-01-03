@@ -15,7 +15,7 @@
  *  permissions and limitations under the License.
  */
 
-package org.brewman.spring.temporal.config;
+package org.brewman.temporal.autoconfigure;
 
 import io.temporal.activity.ActivityOptions;
 import io.temporal.client.WorkflowClientOptions.Builder;
@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConditionalOnMissingBean(
-    type = "org.brewman.spring.temporal.config.TemporalOptionsConfiguration")
+    type = "org.brewman.temporal.autoconfigure.TemporalOptionsConfiguration")
 @Slf4j
 public class DefaultTemporalOptionsConfiguration implements TemporalOptionsConfiguration {
 

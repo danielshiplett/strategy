@@ -7,10 +7,11 @@ import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.brewman.spring.temporal.config.EnableTemporalWorkflows;
-import org.brewman.spring.temporal.config.TemporalOptionsConfiguration;
-import org.brewman.spring.temporal.config.TemporalProperties;
-import org.brewman.spring.temporal.config.WorkerBeanFactory;
+import org.brewman.temporal.autoconfigure.EnableTemporalActivities;
+import org.brewman.temporal.autoconfigure.EnableTemporalWorkflows;
+import org.brewman.temporal.autoconfigure.TemporalOptionsConfiguration;
+import org.brewman.temporal.autoconfigure.TemporalProperties;
+import org.brewman.temporal.autoconfigure.WorkerBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +19,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(TemporalProperties.class)
-@EnableTemporalWorkflows("org.brewman.strategydemo.workflow")
+@EnableTemporalWorkflows("org.brewman.strategydemo.temporal.workflows")
+@EnableTemporalActivities("org.brewman.strategydemo.temporal.activities")
 @RequiredArgsConstructor
 @Slf4j
 public class TemporalConfiguration  {

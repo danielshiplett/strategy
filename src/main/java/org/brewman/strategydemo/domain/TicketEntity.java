@@ -1,4 +1,4 @@
-package org.brewman.strategydemo.workflow;
+package org.brewman.strategydemo.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

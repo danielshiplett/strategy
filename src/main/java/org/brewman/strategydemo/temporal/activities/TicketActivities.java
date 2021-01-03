@@ -1,6 +1,7 @@
-package org.brewman.strategydemo.workflow;
+package org.brewman.strategydemo.temporal.activities;
 
 import io.temporal.activity.ActivityInterface;
+import org.brewman.strategydemo.domain.TicketEntity;
 
 @ActivityInterface
 public interface TicketActivities {

@@ -1,12 +1,12 @@
-package org.brewman.spring.temporal.config;
+package org.brewman.temporal.autoconfigure;
 
 import io.temporal.client.WorkflowOptions;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.brewman.strategydemo.workflow.TicketActivitiesImpl;
-import org.brewman.strategydemo.workflow.TicketWorkflowImpl;
+import org.brewman.strategydemo.temporal.activities.TicketActivitiesImpl;
+import org.brewman.strategydemo.temporal.workflows.TicketWorkflowImpl;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -16,7 +16,7 @@ import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-import static org.brewman.strategydemo.workflow.TicketWorkflow.TASK;
+import static org.brewman.strategydemo.temporal.workflows.TicketWorkflow.TASK;
 
 @RequiredArgsConstructor
 @Slf4j

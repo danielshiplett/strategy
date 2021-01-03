@@ -1,9 +1,11 @@
-package org.brewman.strategydemo.workflow;
+package org.brewman.strategydemo.temporal.workflows;
 
 import io.temporal.activity.ActivityOptions;
 import io.temporal.common.RetryOptions;
 import io.temporal.workflow.Workflow;
 import lombok.extern.slf4j.Slf4j;
+import org.brewman.strategydemo.domain.TicketEntity;
+import org.brewman.strategydemo.temporal.activities.TicketActivities;
 
 import java.time.Duration;
 

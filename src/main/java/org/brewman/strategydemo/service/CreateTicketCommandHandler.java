@@ -5,9 +5,8 @@ import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.brewman.strategydemo.workflow.TicketEntity;
-import org.brewman.strategydemo.workflow.TicketWorkflow;
-import org.brewman.strategydemo.workflow.TicketWorkflowImpl;
+import org.brewman.strategydemo.domain.TicketEntity;
+import org.brewman.strategydemo.temporal.workflows.TicketWorkflow;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -35,7 +34,7 @@ public class CreateTicketCommandHandler implements
         // Customize the options with the ticket name as the workflow ID.
         // TODO: The basic options should be created elsewhere because we don't want the caller having to know
         // the task name and such.
-        WorkflowOptions workflowOptions = WorkflowOptions.newBuilder().setWorkflowId(name).setTaskQueue(TicketWorkflowImpl.TASK).build();
+        WorkflowOptions workflowOptions = WorkflowOptions.newBuilder().setWorkflowId(name).setTaskQueue(TicketWorkflow.TASK).build();
         TicketWorkflow workflow = workflowClient.newWorkflowStub(TicketWorkflow.class, workflowOptions);
 
         WorkflowExecution workflowExecution = WorkflowClient.start(workflow::createTicket, name, command.getDescription());

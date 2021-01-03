@@ -1,9 +1,10 @@
-package org.brewman.strategydemo.workflow;
+package org.brewman.strategydemo.temporal.activities;
 
 import io.temporal.activity.Activity;
 import io.temporal.activity.ActivityExecutionContext;
 import io.temporal.activity.ActivityInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.brewman.strategydemo.domain.TicketEntity;
 
 @Slf4j
 public class TicketActivitiesImpl implements TicketActivities {
