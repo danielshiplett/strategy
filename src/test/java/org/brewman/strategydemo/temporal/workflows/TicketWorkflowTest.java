@@ -13,6 +13,7 @@ import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
 import org.brewman.strategydemo.domain.TicketEntity;
+import org.brewman.strategydemo.service.SomeOtherService;
 import org.brewman.strategydemo.temporal.activities.TicketActivities;
 import org.brewman.strategydemo.temporal.activities.TicketActivitiesImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -71,7 +72,7 @@ class TicketWorkflowTest {
         // Mock the activities to make the generateTicketNumber throw an
         // IllegalArgumentException.  This exception will be our one type
         // that does not trigger a retry.
-        TicketActivities activities = new TicketActivitiesImpl();
+        TicketActivities activities = new TicketActivitiesImpl(new SomeOtherService());
 
         worker.registerActivitiesImplementations(activities);
         workflowEnvironment.start();

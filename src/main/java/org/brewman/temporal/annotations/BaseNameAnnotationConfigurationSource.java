@@ -1,4 +1,4 @@
-package org.brewman.temporal.autoconfigure;
+package org.brewman.temporal.annotations;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
@@ -10,7 +10,6 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -21,9 +20,9 @@ import java.util.stream.Stream;
 
 public abstract class BaseNameAnnotationConfigurationSource {
 
-    private static final String BASE_PACKAGES = "basePackages";
+    private static final String ACTIVITY_BASE_PACKAGES = "activityBasePackages";
+    private static final String WORKFLOW_BASE_PACKAGES = "workflowBasePackages";
 
-    private final AnnotationMetadata configMetadata;
     private final AnnotationAttributes attributes;
 
     public BaseNameAnnotationConfigurationSource(AnnotationMetadata metadata, Class<? extends Annotation> annotation,
@@ -43,7 +42,6 @@ public abstract class BaseNameAnnotationConfigurationSource {
         }
 
         this.attributes = new AnnotationAttributes(annotationAttributes);
-        this.configMetadata = metadata;
     }
 
     private static ClassLoader getRequiredClassLoader(ResourceLoader resourceLoader) {
@@ -64,21 +62,15 @@ public abstract class BaseNameAnnotationConfigurationSource {
                 : generator;
     }
 
-    public Stream<String> getBasePackages() {
-        String[] value = attributes.getStringArray("value");
-        String[] basePackages = attributes.getStringArray(BASE_PACKAGES);
+    public Stream<String> getWorkflowBasePackages() {
+        return getBasePackages(WORKFLOW_BASE_PACKAGES);
+    }
 
-        // Default configuration - return package of annotated class
-        if (value.length == 0 && basePackages.length == 0) {
+    public Stream<String> getActivityPackages() {
+        return getBasePackages(ACTIVITY_BASE_PACKAGES);
+    }
 
-            String className = configMetadata.getClassName();
-            return Stream.of(ClassUtils.getPackageName(className));
-        }
-
-        Set<String> packages = new HashSet<>();
-        packages.addAll(Arrays.asList(value));
-        packages.addAll(Arrays.asList(basePackages));
-
-        return packages.stream();
+    private Stream<String> getBasePackages(String property) {
+        return new HashSet<>(Arrays.asList(attributes.getStringArray(property))).stream();
     }
 }

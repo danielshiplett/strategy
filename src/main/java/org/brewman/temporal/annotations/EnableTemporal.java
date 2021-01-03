@@ -1,8 +1,7 @@
-package org.brewman.temporal.autoconfigure;
+package org.brewman.temporal.annotations;
 
+import org.brewman.temporal.autoconfigure.TemporalRegistrar;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -15,10 +14,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-@Order(Ordered.LOWEST_PRECEDENCE - 1)
-@Import(TemporalWorkflowRegistrar.class)
-public @interface EnableTemporalWorkflows {
-    String[] value() default {};
+@Import(TemporalRegistrar.class)
+public @interface EnableTemporal {
 
-    String[] basePackages() default {};
+    String[] workflowBasePackages() default {};
+
+    String[] activityBasePackages() default {};
 }

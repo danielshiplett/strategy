@@ -1,6 +1,7 @@
 package org.brewman.temporal.autoconfigure;
 
 import lombok.extern.slf4j.Slf4j;
+import org.brewman.temporal.annotations.BaseNameAnnotationConfigurationSource;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
@@ -33,8 +34,6 @@ public abstract class TemporalBeanDefinitionRegistrarSupport implements
 
     protected abstract BaseNameAnnotationConfigurationSource getConfigurationSource(
             AnnotationMetadata metadata, BeanDefinitionRegistry registry, BeanNameGenerator generator);
-
-    protected abstract ClassPathScanningCandidateComponentProvider getComponentProvider();
 
     /*
      * (non-Javadoc)
@@ -84,12 +83,13 @@ public abstract class TemporalBeanDefinitionRegistrarSupport implements
         registerBeansIn(registry, configurationSource);
     }
 
-    protected Stream<BeanDefinition> getCandidates(BaseNameAnnotationConfigurationSource configurationSource) {
-        ClassPathScanningCandidateComponentProvider componentProvider = getComponentProvider();
+    protected Stream<BeanDefinition> getCandidates(
+            Stream<String> basePackages,
+            ClassPathScanningCandidateComponentProvider componentProvider) {
         componentProvider.setEnvironment(environment);
         componentProvider.setResourceLoader(resourceLoader);
 
-        return configurationSource.getBasePackages().flatMap(it -> componentProvider.findCandidateComponents(it).stream());
+        return basePackages.flatMap(it -> componentProvider.findCandidateComponents(it).stream());
     }
 
     protected Class<?> loadClassFromBeanDefinition(BeanDefinition beanDefinition) {

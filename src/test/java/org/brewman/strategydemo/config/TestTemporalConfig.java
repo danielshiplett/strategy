@@ -5,6 +5,7 @@ import io.temporal.client.WorkflowOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
+import org.brewman.strategydemo.service.SomeOtherService;
 import org.brewman.strategydemo.temporal.activities.TicketActivitiesImpl;
 import org.brewman.strategydemo.temporal.workflows.TicketWorkflowImpl;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -19,7 +20,7 @@ public class TestTemporalConfig {
 
     private final WorkflowClient workflowClient;
 
-    public TestTemporalConfig() {
+    public TestTemporalConfig(SomeOtherService someOtherService) {
         TestWorkflowEnvironment workflowEnvironment = TestWorkflowEnvironment.newInstance();
         Worker worker = workflowEnvironment.newWorker(TASK);
         worker.registerWorkflowImplementationTypes(TicketWorkflowImpl.class);
@@ -30,7 +31,7 @@ public class TestTemporalConfig {
                 .setTaskQueue(TASK)
                 .build();
 
-        worker.registerActivitiesImplementations(new TicketActivitiesImpl());
+        worker.registerActivitiesImplementations(new TicketActivitiesImpl(someOtherService));
         workflowEnvironment.start();
     }
 

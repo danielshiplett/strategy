@@ -3,11 +3,15 @@ package org.brewman.temporal.autoconfigure;
 import io.temporal.worker.Worker;
 import lombok.extern.slf4j.Slf4j;
 import org.brewman.strategydemo.temporal.workflows.TicketWorkflow;
+import org.brewman.temporal.annotations.BaseNameAnnotationConfigurationSource;
+import org.brewman.temporal.annotations.EnableTemporal;
+import org.brewman.temporal.annotations.TemporalAnnotationConfigurationSource;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.Assert;
 
@@ -16,48 +20,69 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
-class TemporalWorkflowRegistrar extends TemporalBeanDefinitionRegistrarSupport {
+public class TemporalRegistrar extends TemporalBeanDefinitionRegistrarSupport {
 
     @Override
     protected Class<? extends Annotation> getEnableAnnotation() {
-        return EnableTemporalWorkflows.class;
+        return EnableTemporal.class;
     }
 
     @Override
     protected BaseNameAnnotationConfigurationSource getConfigurationSource(
             AnnotationMetadata metadata, BeanDefinitionRegistry registry, BeanNameGenerator generator) {
-        return new AnnotationWorkflowConfigurationSource(metadata,
+        return new TemporalAnnotationConfigurationSource(metadata,
                 getEnableAnnotation(), resourceLoader, environment, registry, generator);
-    }
-
-    @Override
-    protected ClassPathScanningCandidateComponentProvider getComponentProvider() {
-        return new TemporalWorkflowComponentProvider();
     }
 
     @Override
     protected void registerBeansIn(BeanDefinitionRegistry registry, BaseNameAnnotationConfigurationSource configurationSource) {
 
         Assert.isInstanceOf(
-                AnnotationWorkflowConfigurationSource.class,
+                TemporalAnnotationConfigurationSource.class,
                 configurationSource, "ConfigurationSource must be an AnnotationWorkflowConfigurationSource");
 
-        AnnotationWorkflowConfigurationSource annotationWorkflowConfigurationSource = (AnnotationWorkflowConfigurationSource)configurationSource;
+        TemporalAnnotationConfigurationSource temporalAnnotationConfigurationSource = (TemporalAnnotationConfigurationSource)configurationSource;
 
-        registerWorkflowsIn(registry, annotationWorkflowConfigurationSource);
+        registerActivitiesIn(registry, temporalAnnotationConfigurationSource);
+        registerWorkflowsIn(registry, temporalAnnotationConfigurationSource);
     }
 
-    private void registerWorkflowsIn(BeanDefinitionRegistry registry, AnnotationWorkflowConfigurationSource configurationSource) {
-        log.info("registerWorkflowsIn");
+    private void registerActivitiesIn(BeanDefinitionRegistry registry, BaseNameAnnotationConfigurationSource configurationSource) {
+        log.info("registerActivitiesIn");
 
-        configurationSource.getBasePackages();
+        if (log.isInfoEnabled()) {
+            log.info("Scanning for activities in packages {}.",
+                    configurationSource.getActivityPackages().collect(Collectors.joining(", ")));
+        }
+
+        Stream<BeanDefinition> candidates = getCandidates(
+                configurationSource.getActivityPackages(),
+                new TemporalActivityComponentProvider());
+
+        for (BeanDefinition candidate : candidates.collect(Collectors.toList())) {
+            if (log.isInfoEnabled()) {
+                log.info("Found candidate activity {}", candidate.getBeanClassName());
+            }
+
+            Class<?> activityClazz = loadClassFromBeanDefinition(candidate);
+            log.info("Found class {}", activityClazz.getName());
+
+            BeanDefinition beanDefinition = createActivityBeanDefinition(activityClazz);
+            registry.registerBeanDefinition("SOMEACTIVITY", beanDefinition);
+        }
+    }
+
+    private void registerWorkflowsIn(BeanDefinitionRegistry registry, TemporalAnnotationConfigurationSource configurationSource) {
+        log.info("registerWorkflowsIn");
 
         if (log.isInfoEnabled()) {
             log.info("Scanning for workflows in packages {}.",
-                    configurationSource.getBasePackages().collect(Collectors.joining(", ")));
+                    configurationSource.getWorkflowBasePackages().collect(Collectors.joining(", ")));
         }
 
-        Stream<BeanDefinition> candidates = getCandidates(configurationSource);
+        Stream<BeanDefinition> candidates = getCandidates(
+                configurationSource.getWorkflowBasePackages(),
+                new TemporalWorkflowComponentProvider());
 
         for (BeanDefinition candidate : candidates.collect(Collectors.toList())) {
             if(log.isInfoEnabled()) {
@@ -93,6 +118,12 @@ class TemporalWorkflowRegistrar extends TemporalBeanDefinitionRegistrarSupport {
 
         beanDefinition.setConstructorArgumentValues(constructorArgumentValues);
 
+        return beanDefinition;
+    }
+
+    private BeanDefinition createActivityBeanDefinition(Class<?> activityImplementationClass) {
+        GenericBeanDefinition beanDefinition = new GenericBeanDefinition();
+        beanDefinition.setBeanClassName(activityImplementationClass.getName());
         return beanDefinition;
     }
 }
