@@ -1,5 +1,7 @@
 package org.brewman.temporal.autoconfigure;
 
+import io.temporal.activity.ActivityInterface;
+import io.temporal.workflow.WorkflowInterface;
 import lombok.extern.slf4j.Slf4j;
 import org.brewman.temporal.annotations.BaseNameAnnotationConfigurationSource;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -10,6 +12,7 @@ import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.ConfigurationClassPostProcessor;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
@@ -99,6 +102,30 @@ public abstract class TemporalBeanDefinitionRegistrarSupport implements
             return ClassUtils.forName(beanDefinition.getBeanClassName(), resourceLoader.getClassLoader());
         } catch (ClassNotFoundException | LinkageError e) {
             log.warn("Could not load type {} with class loader {}", beanDefinition.getBeanClassName(), resourceLoader.getClassLoader());
+        }
+
+        return null;
+    }
+
+    protected Class<?> getActivityInterface(Class<?> activityClazz) {
+        for(Class<?> interfaceClazz : activityClazz.getInterfaces()) {
+            log.debug("interfaceClazz: {}", interfaceClazz.getName());
+
+            if(AnnotationUtils.isCandidateClass(interfaceClazz, ActivityInterface.class)){
+                return interfaceClazz;
+            }
+        }
+
+        return null;
+    }
+
+    protected Class<?> getWorkflowInterface(Class<?> workflowClazz) {
+        for(Class<?> interfaceClazz : workflowClazz.getInterfaces()) {
+            log.debug("interfaceClazz: {}", interfaceClazz.getName());
+
+            if(AnnotationUtils.isCandidateClass(interfaceClazz, WorkflowInterface.class)){
+                return interfaceClazz;
+            }
         }
 
         return null;

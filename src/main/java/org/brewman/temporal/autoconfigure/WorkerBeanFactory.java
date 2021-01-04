@@ -15,6 +15,7 @@ import org.springframework.beans.factory.config.NamedBeanHolder;
 import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ResolvableType;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 import java.util.Set;
@@ -29,18 +30,19 @@ public class WorkerBeanFactory extends AbstractAutowireCapableBeanFactory {
 
     private final ApplicationContext applicationContext;
     private final WorkflowClient workflowClient;
+    private final TemporalProperties temporalProperties;
 
-    public Worker createWorker(Class<?> workflowImplementationClass, String workerTaskQueue) {
-        log.warn("createWorker: {}, {}", workflowImplementationClass, workerTaskQueue);
+    public Worker createWorker(Class<?> workflowImplementationClass) {
+        log.warn("createWorker: {}", workflowImplementationClass);
         Map<String, Object> activityBeans = getActivityBeans();
 
         WorkerFactory workerFactory = WorkerFactory.newInstance(workflowClient);
 
-        Worker worker = workerFactory.newWorker(workerTaskQueue);
+        Worker worker = workerFactory.newWorker(getWorkflowQueueName());
         worker.registerWorkflowImplementationTypes(workflowImplementationClass);
 
         /*
-         * For now, just register all activity implmentations with every worker.
+         * For now, just register all activity implementations with every worker.
          */
         for(Map.Entry<String, Object> entry : activityBeans.entrySet()) {
             log.info("registering activity {} to worker", entry.getKey());
@@ -54,6 +56,22 @@ public class WorkerBeanFactory extends AbstractAutowireCapableBeanFactory {
 
     private Map<String, Object> getActivityBeans() {
         return applicationContext.getBeansWithAnnotation(ActivityInterface.class);
+    }
+
+    private String getWorkflowQueueName() {
+        String name = "DEFAULT"; // If all else fails, the name of the task queue will be DEFAULT
+
+        if(temporalProperties.getWorkflowDefaults() != null) {
+            String workflowDefaultQueueName = temporalProperties.getWorkflowDefaults().getTaskQueue();
+
+            if(StringUtils.hasLength(workflowDefaultQueueName)) {
+                name = workflowDefaultQueueName;
+            }
+        }
+
+        log.info("Workflow Queue Name: {}", name);
+
+        return name;
     }
 
     @Override
@@ -82,13 +100,13 @@ public class WorkerBeanFactory extends AbstractAutowireCapableBeanFactory {
 
     @Override
     public <T> T getBean(Class<T> requiredType) throws BeansException {
-        log.warn("getBean");
+        log.warn("getBean: {}", requiredType.getName());
         return null;
     }
 
     @Override
     public <T> T getBean(Class<T> requiredType, Object... args) throws BeansException {
-        log.warn("getBean");
+        log.warn("getBean: {}, {}", requiredType.getName(), args);
         return null;
     }
 

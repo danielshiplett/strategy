@@ -1,44 +1,40 @@
 package org.brewman.strategydemo.config;
 
 import io.temporal.client.WorkflowClient;
-import io.temporal.client.WorkflowOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
-import io.temporal.worker.Worker;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.brewman.strategydemo.service.SomeOtherService;
-import org.brewman.strategydemo.temporal.activities.TicketActivitiesImpl;
-import org.brewman.strategydemo.temporal.workflows.TicketWorkflowImpl;
-import org.springframework.boot.test.context.TestConfiguration;
+import org.brewman.temporal.autoconfigure.TemporalProperties;
+import org.brewman.temporal.autoconfigure.WorkerBeanFactory;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import static org.brewman.strategydemo.temporal.workflows.TicketWorkflow.TASK;
-
-@TestConfiguration
+@Configuration
+@EnableConfigurationProperties(TemporalProperties.class)
+@RequiredArgsConstructor
 @Slf4j
-public class TestTemporalConfig {
+public class TestTemporalConfig  {
 
-    private final WorkflowClient workflowClient;
-
-    public TestTemporalConfig(SomeOtherService someOtherService) {
+    @Primary
+    @Bean
+    public WorkflowClient workflowClient() {
+        log.warn("Overriding WorkflowClient");
         TestWorkflowEnvironment workflowEnvironment = TestWorkflowEnvironment.newInstance();
-        Worker worker = workflowEnvironment.newWorker(TASK);
-        worker.registerWorkflowImplementationTypes(TicketWorkflowImpl.class);
-
-        workflowClient = workflowEnvironment.getWorkflowClient();
-
-        WorkflowOptions workflowOptions = WorkflowOptions.newBuilder()
-                .setTaskQueue(TASK)
-                .build();
-
-        worker.registerActivitiesImplementations(new TicketActivitiesImpl(someOtherService));
+        WorkflowClient workflowClient = workflowEnvironment.getWorkflowClient();
         workflowEnvironment.start();
+        return workflowClient;
     }
 
     @Primary
     @Bean
-    public WorkflowClient testClient() {
-        log.warn("Overriding WorkflowClient");
-        return workflowClient;
+    public WorkerBeanFactory workerBeanFactory(
+            ApplicationContext applicationContext,
+            WorkflowClient workflowClient,
+            TemporalProperties temporalProperties) {
+        log.info("WorkerBeanFactory Created");
+        return new WorkerBeanFactory(applicationContext, workflowClient, temporalProperties);
     }
 }

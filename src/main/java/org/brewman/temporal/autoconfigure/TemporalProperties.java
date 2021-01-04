@@ -28,16 +28,11 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "temporal")
 public class TemporalProperties {
 
-    private Boolean enabled = true;
     private String host;
     private Integer port;
-    private Boolean useSsl;
     private boolean createWorkers = true;
     private WorkflowOption workflowDefaults;
     private Map<String, WorkflowOption> workflows;
-    private ActivityStubOptions activityStubDefaults;
-    private Map<String, ActivityStubOptions> activityStubs;
-    private boolean addedDefaultsToWorkflows = false;
 
     @Data
     @NoArgsConstructor
@@ -49,37 +44,27 @@ public class TemporalProperties {
         private Integer workflowPoolSize;
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class ActivityStubOptions {
-        private Long scheduleToCloseTimeout;
-        private String scheduleToCloseTimeoutUnit;
-    }
-
     public Map<String, WorkflowOption> getWorkflows() {
-        if (!addedDefaultsToWorkflows) {
-            synchronized (this) {
-                workflows.forEach((key, value) -> {
-                    if (value.getExecutionTimeout() == null) {
-                        value.setExecutionTimeout(workflowDefaults.getExecutionTimeout());
-                    }
+        synchronized (this) {
+            workflows.forEach((key, value) -> {
+                if (value.getExecutionTimeout() == null) {
+                    value.setExecutionTimeout(workflowDefaults.getExecutionTimeout());
+                }
 
-                    if (value.getExecutionTimeoutUnit() == null) {
-                        value.setExecutionTimeoutUnit(workflowDefaults.getExecutionTimeoutUnit());
-                    }
+                if (value.getExecutionTimeoutUnit() == null) {
+                    value.setExecutionTimeoutUnit(workflowDefaults.getExecutionTimeoutUnit());
+                }
 
-                    if (value.getActivityPoolSize() == null) {
-                        value.setActivityPoolSize(workflowDefaults.getActivityPoolSize());
-                    }
+                if (value.getActivityPoolSize() == null) {
+                    value.setActivityPoolSize(workflowDefaults.getActivityPoolSize());
+                }
 
-                    if (value.getWorkflowPoolSize() == null) {
-                        value.setWorkflowPoolSize(workflowDefaults.getWorkflowPoolSize());
-                    }
-
-                    addedDefaultsToWorkflows = true;
-                });
-            }
+                if (value.getWorkflowPoolSize() == null) {
+                    value.setWorkflowPoolSize(workflowDefaults.getWorkflowPoolSize());
+                }
+            });
         }
+
         return workflows;
     }
 }

@@ -9,8 +9,6 @@ import org.brewman.strategydemo.domain.TicketEntity;
 @WorkflowInterface
 public interface TicketWorkflow {
 
-    public String TASK = "TICKETEVALUATIONTASK";
-
     @WorkflowMethod
     void createTicket(String name, String description);
 

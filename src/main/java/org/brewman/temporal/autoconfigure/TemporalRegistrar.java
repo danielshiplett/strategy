@@ -11,7 +11,6 @@ import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.Assert;
 
@@ -65,10 +64,16 @@ public class TemporalRegistrar extends TemporalBeanDefinitionRegistrarSupport {
             }
 
             Class<?> activityClazz = loadClassFromBeanDefinition(candidate);
-            log.info("Found class {}", activityClazz.getName());
+            log.info("Found Activity Implementation {}", activityClazz.getSimpleName());
+
+            Class<?> activityInterfaceClazz = getActivityInterface(activityClazz);
+            log.info("Found Activity Interface {}", activityInterfaceClazz.getSimpleName());
 
             BeanDefinition beanDefinition = createActivityBeanDefinition(activityClazz);
-            registry.registerBeanDefinition("SOMEACTIVITY", beanDefinition);
+
+            String activityBeanName = activityInterfaceClazz.getSimpleName();
+            registry.registerBeanDefinition(activityBeanName, beanDefinition);
+            log.info("Registered Bean {}", activityBeanName);
         }
     }
 
@@ -90,19 +95,22 @@ public class TemporalRegistrar extends TemporalBeanDefinitionRegistrarSupport {
             }
 
             Class<?> workflowClazz = loadClassFromBeanDefinition(candidate);
-            log.info("Found class {}", workflowClazz.getName());
+            log.info("Found Workflow Implementation {}", workflowClazz.getSimpleName());
+
+            Class<?> workflowInterfaceClazz = getWorkflowInterface(workflowClazz);
+            log.info("Found Workflow Interface {}", workflowInterfaceClazz.getSimpleName());
 
             // TODO: The options need to come from properties.
-            String taskQueue = TicketWorkflow.TASK;
-            BeanDefinition workerBeanDefinition = createWorkerBeanDefinition(workflowClazz, taskQueue);
+            BeanDefinition workerBeanDefinition = createWorkerBeanDefinition(workflowClazz);
 
             // TODO: Need to generate the bean name.
-            registry.registerBeanDefinition("SOMEWORKER", workerBeanDefinition);
-            //registry.registerBeanDefinition(candidate.getBeanClassName(), candidate);
+            String workerBeanName = "worker" + workflowInterfaceClazz.getSimpleName();
+            registry.registerBeanDefinition(workerBeanName, workerBeanDefinition);
+            log.info("Registered Bean {}", workerBeanName);
         }
     }
 
-    private BeanDefinition createWorkerBeanDefinition(Class<?> workflowImplementationClass, String workerTaskQueue) {
+    private BeanDefinition createWorkerBeanDefinition(Class<?> workflowImplementationClass) {
         WorkerBeanDefinition beanDefinition = new WorkerBeanDefinition();
         beanDefinition.setBeanClassName(Worker.class.getName());
         beanDefinition.setFactoryBeanName("workerBeanFactory");
@@ -114,7 +122,6 @@ public class TemporalRegistrar extends TemporalBeanDefinitionRegistrarSupport {
          */
         ConstructorArgumentValues constructorArgumentValues = new ConstructorArgumentValues();
         constructorArgumentValues.addGenericArgumentValue(workflowImplementationClass);
-        constructorArgumentValues.addGenericArgumentValue(workerTaskQueue);
 
         beanDefinition.setConstructorArgumentValues(constructorArgumentValues);
 

@@ -25,7 +25,6 @@ import java.time.Duration;
 import java.util.Iterator;
 
 import static org.awaitility.Awaitility.await;
-import static org.brewman.strategydemo.temporal.workflows.TicketWorkflow.TASK;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,6 +40,8 @@ import static org.mockito.Mockito.verify;
 @Slf4j
 class TicketWorkflowTest {
 
+    private static final String TASKQUEUE = "TICKETEVALUATIONTASK";
+
     private TestWorkflowEnvironment workflowEnvironment;
     private Worker worker;
     private WorkflowClient workflowClient;
@@ -49,13 +50,13 @@ class TicketWorkflowTest {
     @BeforeEach
     void beforeEachTicketEvaluationWorkflowTest() {
         workflowEnvironment = TestWorkflowEnvironment.newInstance();
-        worker = workflowEnvironment.newWorker(TASK);
+        worker = workflowEnvironment.newWorker(TASKQUEUE);
         worker.registerWorkflowImplementationTypes(TicketWorkflowImpl.class);
 
         workflowClient = workflowEnvironment.getWorkflowClient();
 
         workflowOptions = WorkflowOptions.newBuilder()
-                .setTaskQueue(TASK)
+                .setTaskQueue(TASKQUEUE)
                 .build();
     }
 

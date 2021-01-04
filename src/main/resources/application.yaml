@@ -3,20 +3,18 @@ spring:
   output.ansi.enabled: always
 
 temporal:
-  enabled: true
   # host: localhost
   # port: 7233
-  # useSsl: false
-  # createWorkers: true
-  workflowDefaults:
-    executiontimeout: 1000
-    executiontimeoutUnit: SECONDS
-    activityPoolSize: 100
-    workflowPoolSize: 50
+  workflow-defaults:
+    activity-pool-size: 100
+    execution-timeout: 1000
+    execution-timeout-unit: SECONDS
+    task-queue: DEFAULT
+    workflow-pool-size: 50
   workflows:
     ticket_workflow:
-      taskQueue: ticket_workflow
-      executiontimeout: 1000
-      executiontimeoutUnit: SECONDS
-      activityPoolSize: 100
-      workflowPoolSize: 50
+      activity-pool-size: 100
+      execution-timeout: 1000
+      execution-timeout-unit: SECONDS
+      task-queue: TICKETEVALUATIONTASK
+      workflow-pool-size: 50
